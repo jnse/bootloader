@@ -35,3 +35,6 @@
 *.out
 *.app
 *.elf
+
+# VIM
+*.swp

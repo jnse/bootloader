@@ -10,10 +10,10 @@ echo "[COMPILING STAGE 1]"
 nasm stage1.asm -f bin -o stage1.img
 
 echo -e "[COMPILING STAGE 2]"
-nasm rmstd.asm -f elf -o rmstd.o
-g++ -c -g -Os -m16 -ffreestanding -Wall -Werror -I . -o stage2.o stage2.cpp
-ld -m elf_i386 -static -Tstage2.ld -nostdlib --nmagic -o stage2.elf rmstd.o stage2.o
-objcopy -O binary stage2.elf stage2.img
+nasm stage2.asm -f bin -o stage2.img
+#g++ -c -g -Os -m16 -ffreestanding -Wall -Werror -I . -o stage2.o stage2.cpp
+#ld -m elf_i386 -static -Tstage2.ld -nostdlib --nmagic -o stage2.elf stage2_asm.o stage2.o
+#objcopy -O binary stage2.elf stage2.img
 
 echo -e "[CREATING DISK IMAGE]"
 dd if=stage1.img of=disk.img bs=512

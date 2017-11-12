@@ -199,83 +199,7 @@ setmode:
     popa
     ret
 
-; Write character to screen.
-;
-; AX = character
-;
-putch:
-    pusha
-    mov ah, 0x0E
-    mov bx, 0x0007
-    int 0x10
-    popa
-    ret
-
-; Prints text to the screen using bios calls.
-;
-; DS:SI == ptr to string
-;
-print:
-    pusha
-.loop:
-    lodsb           ; al = [ds:si]++
-    test al, al     ; exit when null terminator
-    jz .end         ; encountered.
-    call putch
-    jmp .loop
-.end:
-    popa
-    ret
-
-; Prints a string and starts a new line.
-;
-; DS:SI == ptr to string
-;
-println:
-    pusha
-    call print
-    mov si, newline_str
-    call print
-    popa
-    ret
-
-; Prints an error message.
-;
-; DS;SI == ptr to error message string.
-;
-error:
-    pusha
-    push si
-    mov si, error_str
-    call print
-    pop si
-    call println
-    popa
-    ret
-
-; Prints an info message.
-;
-; DS;SI == ptr to error message string.
-;
-info:
-    pusha
-    push si
-    mov si, info_str
-    call print
-    pop si
-    call println
-    popa
-    ret
-
-; Terminate bootloader (if we get here, that's bad).
-;
-halt_and_catch_fire:
-    mov si, halted_str
-    call error
-    cli
-    hlt
-    jmp halt_and_catch_fire
-    ret
+%include "shared_functions.asm"
 
 ; -----------------------------------------------------------------------------
 ; Variables
@@ -283,17 +207,10 @@ halt_and_catch_fire:
 
 ; Where in memory to load stage2 from disk.
 stage2_location: equ 0x7E00
-
-; Strings.
-info_str: db '[INFO] ', 0
-error_str: db '[ERROR] ', 0
 welcome_str: db 'Entered stage1.', 0
-halted_str: db 'HALT', 0
-retry_str: db 'Disk reset. Retrying.', 0
-read_error_str: db 'Disk read error.', 0
-newline_str: db 10, 13, 0
 load_str: db 'Load stage1 from disk ', 0
 success_str: db 'Jump to stage2 at ', 0
+%include "shared_constants.asm"
 boot_drive resw 0
 
 ; -----------------------------------------------------------------------------
