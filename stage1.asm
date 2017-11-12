@@ -40,13 +40,6 @@ stage1:
     call print
     mov ax, stage2_location
     call println_hex_number
-    
-    mov bx, 10
-    xor dx, dx
-    mov ds, dx
-    mov si, stage2_location
-    call memdump
-
     ; do jump
     jmp stage2_location
     ; shouldn't get here.
@@ -206,18 +199,6 @@ setmode:
     popa
     ret
 
-; Set cursor position.
-;
-; DH = row 
-; DL = column
-;
-gotoxy:
-    pusha
-    mov ah, 0x02
-    int 0x10
-    popa
-    ret
-
 ; Write character to screen.
 ;
 ; AX = character
@@ -241,38 +222,6 @@ print:
     test al, al     ; exit when null terminator
     jz .end         ; encountered.
     call putch
-    jmp .loop
-.end:
-    popa
-    ret
-
-; Dump memory to screen.
-;
-; ES:BX = memory to dump
-; BX = number of bytes
-memdump:
-    pusha
-.loop:
-    push si
-    dec bx
-    jz .end
-    mov ax, si
-    call print_hex_number
-    mov al, ':'
-    call putch
-    xor ax, ax
-    pop si
-    lodsb      ; loads DS:SI into AL
-    push si
-    push ax
-    call print_hex_number
-    mov al, ':'
-    call putch
-    pop ax
-    call putch
-    mov si, ' '
-    call println
-    pop si
     jmp .loop
 .end:
     popa
@@ -338,13 +287,13 @@ stage2_location: equ 0x7E00
 ; Strings.
 info_str: db '[INFO] ', 0
 error_str: db '[ERROR] ', 0
-welcome_str: db 'STRT stage1.', 0
+welcome_str: db 'Entered stage1.', 0
 halted_str: db 'HALT', 0
-retry_str: db 'DSK RST. Retry.', 0
-read_error_str: db 'DSK RD.', 0
+retry_str: db 'Disk reset. Retrying.', 0
+read_error_str: db 'Disk read error.', 0
 newline_str: db 10, 13, 0
-load_str: db 'LD stage1 @ DSK ', 0
-success_str: db 'JMP to stage2 @ ', 0
+load_str: db 'Load stage1 from disk ', 0
+success_str: db 'Jump to stage2 at ', 0
 boot_drive resw 0
 
 ; -----------------------------------------------------------------------------
