@@ -18,11 +18,11 @@ ld -melf_i386 -Tstage3.ld -o stage3.elf stage3.o
 objcopy -R .note -R .comment -S -O binary stage3.elf stage3.img
 
 echo -e "[CREATING DISK IMAGE]"
-dd if=/dev/zero of=disk.img bs=512 count=3
+dd if=/dev/zero of=disk.img bs=512 count=6
 # Stage 1 MBR (0 - 512)
 dd if=stage1.img of=disk.img bs=512 conv=notrunc
 # Stage 2 (512 - 1536)
 dd if=stage2.img of=disk.img bs=512 seek=1 conv=notrunc
 # Stage 3 (1536 - *)
-dd if=stage3.img of=disk.img bs=512 seek=3 conv=notrunc
+dd if=stage3.img of=disk.img bs=512 seek=4 conv=notrunc
 

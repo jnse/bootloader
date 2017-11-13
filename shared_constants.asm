@@ -4,7 +4,7 @@
 stack_location:  equ 0x7C00
 stage1_location: equ 0x7C00
 stage2_location: equ 0x7E00
-stage3_location: equ 0x8000
+stage3_location: equ 0x7800
 
 ax_str: db 'AX=', 0
 info_str: db '[INFO ] ', 0

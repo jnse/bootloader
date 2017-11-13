@@ -73,7 +73,7 @@ info:
 ;
 setmode:
     push ax
-    mov ax, 0x07
+    mov ax, 0x03
     int 0x10
     pop ax
     ret

@@ -33,7 +33,9 @@ main:
     call info
 	; Enable A20 memory lane if needed.
     call enable_a20
-    ; Load kernel.
+    ; Get memory map.
+    call get_memory_map
+    ; Load stage3 from disk.
     mov si, info_str
     call print
     mov si, load_str
@@ -49,8 +51,8 @@ main:
     mov es, ax
     mov bx, stage3_location
     mov dl, [boot_drive]
-    mov al, 0x01            ; # sectors to load
-    mov cl, 0x04            ; starting sector
+    mov al, 0x02            ; # sectors to load
+    mov cl, 0x05            ; starting sector
     mov ch, 0x00            ; cylinder 0
     mov dh, 0x00            ; head 0
     call load_code
@@ -58,12 +60,30 @@ main:
     je .success
     call halt_and_catch_fire
 .success:
+    ; Dump first 10 loaded bytes to screen.
+    mov si, info_str
+    call print
+    mov si, stage3_hexdump_str
+    call print
+    ; DS:SI = memory to dump
+    ; BX = number of bytes
+    mov ax, stage3_location
+    mov si, ax
+    mov bx, 9
+    call memdump
 	; Set up GDT.
 .loadGDT:
     lgdt [gdtr]
 	mov si, gdt_installed_str
-	call info 
+	call info
 .enter_protected_mode:
+    mov si, info_str
+    call print
+    mov si, stage3_jmp_str
+    call print
+    mov ax, stage3_location
+    call println_hex_number
+    xor ah, ah
     cli
     pusha
     mov eax, cr0
@@ -71,6 +91,31 @@ main:
     mov cr0, eax
     popa
     jmp 0x8:protected_mode_longjump
+
+; Get a memory map of the system so we know where we can load stuff.
+get_memory_map:
+    pusha
+    mov si, get_mem_map_str
+    call info
+    xor bx, bx              ; continuation (set to 0 for first call)
+    xor dx, dx              ; ES:DI buffer ptr to hold result table.
+    mov es, dx              ; We'll just overwrite stage1 with the table.
+    mov di, stage1_location
+    mov cx, 512             ; buffer size
+    ; Signature: 'SMAP'
+    ; BIOS wants this set to verify that we really want it 
+    ; to return a map.
+    mov dx, 'SMAP'
+    ; int 15h ax=E820 : Query system address map.
+    mov ax, 0xE820
+    int 0x15
+    jnc .done
+.error:
+    mov si, get_mem_map_err_str
+    call error
+.done:
+    popa
+    ret
 
 [bits 32]
 protected_mode_longjump:
@@ -81,6 +126,9 @@ protected_mode_longjump:
     mov es, ax
     mov gs, ax
     jmp stage3_location
+.halter:
+    hlt
+    jmp .halter
 
 [bits 16]
 
@@ -90,29 +138,39 @@ protected_mode_longjump:
 ; BX = number of bytes
 memdump:
     pusha
-.loop:
+    mov al, 10
+    call putch
+    mov al, 13
+    call putch
     push si
-    dec bx
-    jz .end
+    mov si, seven_spaces_str
+    call print
+    pop si
     mov ax, si
     call print_hex_number
     mov al, ':'
     call putch
+    mov al, ' '
+    call putch
+.loop:
+    push si
+    dec bx
+    jz .end
     xor ax, ax
     pop si
     lodsb      ; loads DS:SI into AL
     push si
-    push ax
     call print_hex_number
-    mov al, ':'
+    mov al, ' '
     call putch
-    pop ax
-    call putch
-    mov si, ' '
-    call println
     pop si
     jmp .loop
 .end:
+    mov al, 10
+    call putch
+    mov al, 13
+    call putch
+    pop si
     popa
     ret
 
@@ -123,6 +181,7 @@ memdump:
 ; Variables
 ; -----------------------------------------------------------------------------
 
+; GDT table
 gdt:
     ; NULL descriptor
     NULL_DESC:
@@ -152,19 +211,24 @@ gdtr:
 
 %include "shared_constants.asm"
 
-stage2_welcome_str: db 'Entered stage2.', 0
-do_a20_str: db 'Enabling A20 line.', 0
-a20_enabled_str: db 'A20 line enabled.', 0
-a20_error_str: db 'Failed to enable A20 memory line.', 0
+stage2_welcome_str: db 'Start stage2.', 0
+do_a20_str: db 'Enabling A20.', 0
+a20_enabled_str: db 'A20 enabled.', 0
+a20_error_str: db 'Failed to enable A20.', 0
 gdt_installed_str: db 'GDT installed.', 0
-load_str: db 'Loading stage3 from disk ', 0
-enter_protected_str: db 'Entering protected mode.', 0
+load_str: db 'Loading stage3 ', 0
+enter_protected_str: db 'Enter PM.', 0
+get_mem_map_str: db 'Get memmap.', 0
+get_mem_map_err_str: db 'memmap failed.', 0
+stage3_hexdump_str: db 'Hexdump of first few loaded stage3 bytes: ', 0
+seven_spaces_str: db '        ',0
+stage3_jmp_str: db 'Entering protected mode and jumping into stage3 at ', 0
 
 ; -----------------------------------------------------------------------------
 ; Padding
 ; -----------------------------------------------------------------------------
 
 ; Fill remaining sector space with nop's
-times 1024-($-$$) db 0x90
+times 2048-($-$$) db 0x90
 
 

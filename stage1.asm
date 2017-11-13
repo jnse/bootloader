@@ -50,7 +50,7 @@ stage1:
     mov es, ax
     mov bx, stage2_location
     mov dl, [boot_drive]
-    mov al, 0x02            ; Load 2 sectors
+    mov al, 0x03            ; Load 3 sectors
     mov cl, 0x02            ; starting at sector 2
     mov ch, 0x00            ; cylinder 0
     mov dh, 0x00            ; head 0
