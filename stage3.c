@@ -14,5 +14,6 @@ int main()
 	//{
 	//	__asm__("hlt\n");
 	//}
+    return 0;
 }
 

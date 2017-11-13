@@ -1,5 +1,5 @@
 [BITS 16]
-
+[ORG 0x7E00]
 section .text
 
 global main
