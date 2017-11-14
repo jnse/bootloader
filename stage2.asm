@@ -33,8 +33,6 @@ main:
     call info
 	; Enable A20 memory lane if needed.
     call enable_a20
-    ; Get memory map.
-    call get_memory_map
     ; Load stage3 from disk.
     mov si, info_str
     call print
@@ -71,51 +69,27 @@ main:
     mov si, ax
     mov bx, 9
     call memdump
-	; Set up GDT.
-.loadGDT:
-    lgdt [gdtr]
-	mov si, gdt_installed_str
-	call info
-.enter_protected_mode:
     mov si, info_str
     call print
     mov si, stage3_jmp_str
     call print
     mov ax, stage3_location
     call println_hex_number
-    xor ah, ah
+    ; We need to pass the current cursor position into protected mode,
+    ; since we won't be able to ask the BIOS for it once there.
+    ; Sets DH = current row, DL = current column.
+    xor bh, bh   ; AH = 03h int 10h : Query cursor position and size.
+    mov ah, 0x03 ; BH = video page number
+    int 0x10
+    ; Set up GDT.
     cli
-    pusha
+    lgdt [gdtr]
+    ; Enter protected mode.
     mov eax, cr0
-    or al, 1
+    or eax, 0x01
+    ;or al, 1
     mov cr0, eax
-    popa
     jmp 0x8:protected_mode_longjump
-
-; Get a memory map of the system so we know where we can load stuff.
-get_memory_map:
-    pusha
-    mov si, get_mem_map_str
-    call info
-    xor bx, bx              ; continuation (set to 0 for first call)
-    xor dx, dx              ; ES:DI buffer ptr to hold result table.
-    mov es, dx              ; We'll just overwrite stage1 with the table.
-    mov di, stage1_location
-    mov cx, 512             ; buffer size
-    ; Signature: 'SMAP'
-    ; BIOS wants this set to verify that we really want it 
-    ; to return a map.
-    mov dx, 'SMAP'
-    ; int 15h ax=E820 : Query system address map.
-    mov ax, 0xE820
-    int 0x15
-    jnc .done
-.error:
-    mov si, get_mem_map_err_str
-    call error
-.done:
-    popa
-    ret
 
 [bits 32]
 protected_mode_longjump:
@@ -125,10 +99,12 @@ protected_mode_longjump:
     mov fs, ax
     mov es, ax
     mov gs, ax
-    jmp stage3_location
-.halter:
-    hlt
-    jmp .halter
+    sti
+    movzx ecx, dl
+    movzx edx, dh
+    ; Enter stage3
+    call stage3_location
+    jmp $
 
 [bits 16]
 
@@ -216,7 +192,7 @@ do_a20_str: db 'Enabling A20.', 0
 a20_enabled_str: db 'A20 enabled.', 0
 a20_error_str: db 'Failed to enable A20.', 0
 gdt_installed_str: db 'GDT installed.', 0
-load_str: db 'Loading stage3 ', 0
+load_str: db 'Loading stage3 from disk ', 0
 enter_protected_str: db 'Enter PM.', 0
 get_mem_map_str: db 'Get memmap.', 0
 get_mem_map_err_str: db 'memmap failed.', 0
