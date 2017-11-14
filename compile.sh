@@ -13,8 +13,9 @@ echo -e "[COMPILING STAGE 2]"
 nasm stage2.asm -f bin -o stage2.img
 
 echo -e "[COMPILING STAGE 3]"
+g++ -m32 -c -Wall -Werror -I . -o screen.o screen.cpp
 g++ -m32 -nostdinc -nostdlib -ffreestanding -c -Wall -I . -o stage3.o stage3.cpp
-ld -melf_i386 -Tstage3.ld -nostdinc -nostdlib --nmagic -o stage3.elf stage3.o
+ld -melf_i386 -Tstage3.ld -nostdinc -nostdlib --nmagic -o stage3.elf stage3.o screen.o
 objcopy -R .note -R .comment -S -O binary stage3.elf stage3.img
 
 echo -e "[CREATING DISK IMAGE]"

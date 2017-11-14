@@ -87,7 +87,6 @@ main:
     ; Enter protected mode.
     mov eax, cr0
     or eax, 0x01
-    ;or al, 1
     mov cr0, eax
     jmp 0x8:protected_mode_longjump
 
