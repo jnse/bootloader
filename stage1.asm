@@ -71,7 +71,7 @@ stage1:
     call println_hex_number
     ; do jump
     mov dl, [boot_drive]
-    jmp stage2_location
+    jmp 0:stage2_location
     ; shouldn't get here.
     jmp halt_and_catch_fire
     ret

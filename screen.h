@@ -21,21 +21,34 @@ class screen_device
     uint_8 m_cursor_x;
     /// Current cursor row.
     uint_8 m_cursor_y;
+    /// Current text color.
+    uint_8 m_text_color;
 
     public:
 
         /**
-         * Constructor
+         * Constructor.
          *
          * @param cursor_x : Column location of the cursor upon startup.
          * @param cursor_y : Row location of the cursor upon startup.
-         */
+         **/
         screen_device(uint_8 cursor_x, uint_8 cursor_y);
 
         /**
-         * Writes a character to the screen at a specific location.
+         * Set color for drawing characters.
+         **/
+        void set_color(uint_8 color);
+
+        /**
+         * Set cursor position.
          *
-         * Cursor is moved next to the printed character.
+         * @param x : New cursor column.
+         * @param y : New cursor row.
+         */
+        void move_cursor(uint_8 x, uint_8 y);
+
+        /**
+         * Writes a character to the screen at a specific location.
          *
          * @param character : Character to print to screen.
          * @param x : Column to print character at.
@@ -47,14 +60,21 @@ class screen_device
         /**
          * Writes a series of characters to the screen at a specific location.
          *
-         * Cursor is moved next to the printed string.
-         *
          * @param character : Character to print to screen.
          * @param x : Column to print character at.
          * @param y : Row to print character at.
          * @param color : Color of character to print.
          */ 
         void printstr(const char* str, uint_8 x, uint_8 y, uint_8 color);
+
+        /**
+         * Writes a series of characters to the screen.
+         *
+         * This version uses the current cursor position and color.
+         *
+         * @param character : Character to print to screen.
+         */
+        void printstr(const char* str);
 
 };
 

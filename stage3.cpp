@@ -8,19 +8,14 @@
 #include "types.h"
 #include "screen.h"
 
-/**
- * Stage 3 entry point.
- *
- * Arguments are information read from BIOS and passed from
- * real mode in stage 2 of the bootloader.
- *
- * @param cursor_x : Current column of cursor.
- * @param cursor_y : Current row of cursor.
- */
-NORETURN FASTCALL int main(uint_8 cursor_x, uint_8 cursor_y)
+/// Stage 3 entry point.
+NORETURN int main()
 {
-    screen_device screen(cursor_x, cursor_y);
-    screen.printstr("Hello from C++ !!", cursor_x, cursor_y, 2);
+    const char hello[] = "Hello from c++!!\0";
+    screen_device screen(0,22);
+    screen.set_color(10);
+    screen.printstr(hello);
+    //screen.printstr("Just testing.\n\0");
     // Halt execution by disabling interrupts and halting forever.
     while(1)
     {

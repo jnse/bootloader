@@ -26,6 +26,11 @@ main:
     mov ss, ax
     mov bp, ax
     sti
+    ; Set up GDT.
+    xor ax, ax
+    mov ds, ax
+    cli
+    lgdt [gdtr]
     ; Save boot drive passed from stage1 in DL
     mov [boot_drive], byte dl
 	; Show status message.
@@ -49,7 +54,7 @@ main:
     mov es, ax
     mov bx, stage3_location
     mov dl, [boot_drive]
-    mov al, 0x02            ; # sectors to load
+    mov al, 0x03            ; # sectors to load
     mov cl, 0x05            ; starting sector
     mov ch, 0x00            ; cylinder 0
     mov dh, 0x00            ; head 0
@@ -75,37 +80,11 @@ main:
     call print
     mov ax, stage3_location
     call println_hex_number
-    ; We need to pass the current cursor position into protected mode,
-    ; since we won't be able to ask the BIOS for it once there.
-    ; Sets DH = current row, DL = current column.
-    xor bh, bh   ; AH = 03h int 10h : Query cursor position and size.
-    mov ah, 0x03 ; BH = video page number
-    int 0x10
-    ; Set up GDT.
-    cli
-    lgdt [gdtr]
     ; Enter protected mode.
     mov eax, cr0
-    or eax, 0x01
+    or eax, 1
     mov cr0, eax
-    jmp 0x8:protected_mode_longjump
-
-[bits 32]
-protected_mode_longjump:
-    mov ax, 0x10
-    mov ds, ax
-    mov ss, ax
-    mov fs, ax
-    mov es, ax
-    mov gs, ax
-    sti
-    movzx ecx, dl
-    movzx edx, dh
-    ; Enter stage3
-    call stage3_location
-    jmp $
-
-[bits 16]
+    jmp (CODE_DESC - NULL_DESC) : protected_mode_longjump
 
 ; Dump memory to screen.
 ;
@@ -181,8 +160,8 @@ gdt:
 
 ; GDT pointer
 gdtr:
-    Limit dw 24         ; length of GDT
-    Base dd NULL_DESC   ; base of GDT
+    Limit dw gdtr - NULL_DESC - 1 ; length of GDT
+    Base dd NULL_DESC             ; base of GDT
 
 %include "shared_constants.asm"
 
@@ -199,11 +178,16 @@ stage3_hexdump_str: db 'Hexdump of first few loaded stage3 bytes: ', 0
 seven_spaces_str: db '        ',0
 stage3_jmp_str: db 'Entering protected mode and jumping into stage3 at ', 0
 
-; -----------------------------------------------------------------------------
-; Padding
-; -----------------------------------------------------------------------------
-
-; Fill remaining sector space with nop's
-times 2048-($-$$) db 0x90
-
+[bits 32]
+protected_mode_longjump:
+    mov ax, 0x10
+    mov ds, ax
+    mov ss, ax
+    mov fs, ax
+    mov es, ax
+    mov gs, ax
+    sti
+    ; Enter stage3
+    call stage3_location
+    jmp $
 
