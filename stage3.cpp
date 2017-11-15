@@ -11,11 +11,12 @@
 /// Stage 3 entry point.
 NORETURN int main()
 {
-    const char hello[] = "Hello from c++!!\0";
-    screen_device screen(0,22);
+    screen_device screen;
+
     screen.set_color(10);
-    screen.printstr(hello);
-    //screen.printstr("Just testing.\n\0");
+    screen.clear();
+    screen.printstr("Just testing.\n");
+    
     // Halt execution by disabling interrupts and halting forever.
     while(1)
     {

@@ -34,6 +34,10 @@ main:
     lgdt [gdtr]
     ; Save boot drive passed from stage1 in DL
     mov [boot_drive], byte dl
+    ; Hide cursor.
+    mov ah, 0x01
+    mov ch, 0x3F
+    int 0x10
 	; Show status message.
     mov si, stage2_welcome_str
     call info
@@ -55,10 +59,10 @@ main:
     mov es, ax
     mov bx, stage3_code
     mov dl, [boot_drive]
-    mov al, 0x03            ; # sectors to load
-    mov cl, 0x05            ; starting sector
-    mov ch, 0x00            ; cylinder 0
-    mov dh, 0x00            ; head 0
+    mov al, 0x03 ; # sectors to load
+    mov cl, 0x05 ; starting sector
+    mov ch, 0x00 ; cylinder 0
+    mov dh, 0x00 ; head 0
     call load_code
     cmp ax, 0
     je .success

@@ -8,7 +8,7 @@
 #include "types.h"
 
 /// Screen height (based on video mode set in stage2).
-#define screen_rows 40
+#define screen_rows 25
 /// Screen width (based on video mode set in stage2).
 #define screen_cols 80
 
@@ -28,11 +28,13 @@ class screen_device
 
         /**
          * Constructor.
-         *
-         * @param cursor_x : Column location of the cursor upon startup.
-         * @param cursor_y : Row location of the cursor upon startup.
          **/
-        screen_device(uint_8 cursor_x, uint_8 cursor_y);
+        screen_device();
+
+        /**
+         * Clears the screen.
+         */
+        void clear();
 
         /**
          * Set color for drawing characters.
@@ -77,6 +79,7 @@ class screen_device
         void printstr(const char* str);
 
 };
+
 
 
 #endif
