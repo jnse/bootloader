@@ -1,5 +1,5 @@
 /**
- * Screen device and related andlers.
+ * Screen device and related handlers.
  */
 
 #include "port.h"
