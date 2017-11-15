@@ -1,5 +1,6 @@
 [BITS 16]
 [ORG 0x7E00]
+
 section .text
 
 global main
@@ -13,7 +14,7 @@ jmp main
 main:
     ; Set up segment
     cli
-    mov ax, stage2_location
+    mov ax, stage2_code
     mov ss, ax
     mov bp, ax
     xor ax, ax
@@ -22,7 +23,7 @@ main:
     mov es, ax
     mov ds, ax
 	; Set up stack.
-	mov ax, stack_location
+	mov ax, stage2_stack
     mov ss, ax
     mov bp, ax
     sti
@@ -48,11 +49,11 @@ main:
     call print_hex_number
     mov si, into_str
     call print
-    mov ax, stage3_location
+    mov ax, stage3_code
     call println_hex_number
     xor ax, ax
     mov es, ax
-    mov bx, stage3_location
+    mov bx, stage3_code
     mov dl, [boot_drive]
     mov al, 0x03            ; # sectors to load
     mov cl, 0x05            ; starting sector
@@ -70,7 +71,7 @@ main:
     call print
     ; DS:SI = memory to dump
     ; BX = number of bytes
-    mov ax, stage3_location
+    mov ax, stage3_code
     mov si, ax
     mov bx, 9
     call memdump
@@ -78,7 +79,7 @@ main:
     call print
     mov si, stage3_jmp_str
     call print
-    mov ax, stage3_location
+    mov ax, stage3_code
     call println_hex_number
     ; Enter protected mode.
     mov eax, cr0
@@ -130,10 +131,13 @@ memdump:
 
 %include "a20.asm"
 %include "shared_functions.asm"
+%include "memory_map.asm"
 
 ; -----------------------------------------------------------------------------
 ; Variables
 ; -----------------------------------------------------------------------------
+
+section .data
 
 ; GDT table
 gdt:
@@ -163,6 +167,7 @@ gdtr:
     Limit dw gdtr - NULL_DESC - 1 ; length of GDT
     Base dd NULL_DESC             ; base of GDT
 
+
 %include "shared_constants.asm"
 
 stage2_welcome_str: db 'Start stage2.', 0
@@ -178,6 +183,8 @@ stage3_hexdump_str: db 'Hexdump of first few loaded stage3 bytes: ', 0
 seven_spaces_str: db '        ',0
 stage3_jmp_str: db 'Entering protected mode and jumping into stage3 at ', 0
 
+section .text
+
 [bits 32]
 protected_mode_longjump:
     mov ax, 0x10
@@ -188,6 +195,6 @@ protected_mode_longjump:
     mov gs, ax
     sti
     ; Enter stage3
-    call stage3_location
+    call stage3_code
     jmp $
 

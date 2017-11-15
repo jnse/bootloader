@@ -3,8 +3,8 @@ ENTRY(main);
 
 SECTIONS
 {
-    . = 0x7800;
-    .text : AT(0x7800)
+    . = 0x8600;
+    .text : AT(0x8600)
     {
         _text = .;
         *(.text);

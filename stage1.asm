@@ -17,7 +17,7 @@ stage1:
     mov ds, ax
     mov es, ax
     ; Set up segment.
-	mov ax, stage1_location
+	mov ax, stage1_code
     mov ss, ax
     mov bp, ax
     xor ax, ax
@@ -28,7 +28,7 @@ stage1:
     ; Set up stack.
     cli
     mov ss, ax
-    mov sp, stack_location
+    mov sp, stage1_stack
     sti
     ; Set video mode, print welcome message.
     call setmode
@@ -44,11 +44,11 @@ stage1:
     call print_hex_number
     mov si, into_str
     call print
-    mov ax, stage2_location
+    mov ax, stage2_code
     call println_hex_number
     xor ax, ax
     mov es, ax
-    mov bx, stage2_location
+    mov bx, stage2_code
     mov dl, [boot_drive]
     mov al, 0x03            ; Load 3 sectors
     mov cl, 0x02            ; starting at sector 2
@@ -67,11 +67,11 @@ stage1:
     call print
     mov si, success_str
     call print
-    mov ax, stage2_location
+    mov ax, stage2_code
     call println_hex_number
     ; do jump
     mov dl, [boot_drive]
-    jmp 0:stage2_location
+    jmp 0:stage2_code
     ; shouldn't get here.
     jmp halt_and_catch_fire
     ret
@@ -86,6 +86,7 @@ welcome_str: db 'Start stage1.', 0
 load_str: db 'Load stage2 @disk ', 0
 success_str: db 'JMP stage2 @', 0
 
+%include "memory_map.asm"
 %include "shared_constants.asm"
 
 ; -----------------------------------------------------------------------------
