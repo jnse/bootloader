@@ -53,11 +53,23 @@ main:
     call print_hex_number
     mov si, into_str
     call print
-    mov ax, stage3_code
+
+
+    ; Convert physical stage3 code address
+    ; to real-mode segment and offset.
+    mov eax, stage3_code
+    call phys_to_seg_offs 
+    ; output: BX=segment, DX=offset
+    ; Print the parsed address to screen:
+    mov eax, ebx
+    call print_hex_number
+    mov ax, ':'
+    call putch
+    mov eax, edx
     call println_hex_number
-    xor ax, ax
-    mov es, ax
-    mov bx, stage3_code
+    ; Load code from disk.
+    mov es, bx
+    mov bx, dx
     mov dl, [boot_drive]
     mov al, 0x03 ; # sectors to load
     mov cl, 0x05 ; starting sector
@@ -90,6 +102,30 @@ main:
     or eax, 1
     mov cr0, eax
     jmp (CODE_DESC - NULL_DESC) : protected_mode_longjump
+
+; Calculate 16 bit segment address from 32 bit physical address.
+;
+; INPUT: EAX = physical address.
+; OUTPUT: BX = Segment address. DX = Offset address.
+;
+phys_to_seg_offs:
+    ; eax = physical
+    ; ebx = segment
+    ; edx = offset
+    mov ebx, 0xffff
+    cmp eax, 0x000ffff0
+    jl .compute_segment
+    jmp .compute_offset
+.compute_segment:
+    mov ebx, eax
+    shr ebx, 4
+.compute_offset:
+    push ebx
+    shl ebx, 4
+    mov edx, eax
+    sub edx, ebx
+    pop ebx
+    ret
 
 ; Dump memory to screen.
 ;
