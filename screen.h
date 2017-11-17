@@ -18,11 +18,13 @@
 class screen_device
 {
     /// Current cursor column.
-    uint_8 m_cursor_x;
+    uint8 m_cursor_x;
     /// Current cursor row.
-    uint_8 m_cursor_y;
+    uint8 m_cursor_y;
     /// Current text color.
-    uint_8 m_text_color;
+    uint8 m_text_color;
+    /// Current text background color.
+    uint8 m_text_background;
 
     public:
 
@@ -39,7 +41,7 @@ class screen_device
         /**
          * Set color for drawing characters.
          **/
-        void set_color(uint_8 color);
+        void set_color(uint8 color);
 
         /**
          * Set cursor position.
@@ -47,7 +49,7 @@ class screen_device
          * @param x : New cursor column.
          * @param y : New cursor row.
          */
-        void move_cursor(uint_8 x, uint_8 y);
+        void move_cursor(uint8 x, uint8 y);
 
         /**
          * Writes a character to the screen at a specific location.
@@ -57,7 +59,12 @@ class screen_device
          * @param y : Row to print character at.
          * @param color : Color of character to print.
          */
-        void putch(const uint_8 character, uint_8 x, uint_8 y, uint_8 color);
+        void putch(
+            const uint8 character, 
+            int16 x, 
+            int16 y, 
+            uint8 bg_color, 
+            uint8 fg_color);
 
         /**
          * Writes a series of characters to the screen at a specific location.
@@ -66,8 +73,9 @@ class screen_device
          * @param x : Column to print character at.
          * @param y : Row to print character at.
          * @param color : Color of character to print.
+         * @param bgcolor : Background color of character to print.
          */ 
-        void printstr(const char* str, uint_8 x, uint_8 y, uint_8 color);
+        void printstr(const char* str, uint8 x, uint8 y, uint8 color, uint8 bgcolor);
 
         /**
          * Writes a series of characters to the screen.
@@ -79,7 +87,5 @@ class screen_device
         void printstr(const char* str);
 
 };
-
-
 
 #endif

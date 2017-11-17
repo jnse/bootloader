@@ -13,6 +13,6 @@
  * @param port : Port number.
  * @param data : Byte to be sent to port.
  */
-void outb(uint_32 port, uint_8 data);
+void outb(uint32 port, uint8 data);
 
 #endif

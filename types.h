@@ -6,11 +6,11 @@
 #define TYPES_H_INCLUDE
 
 /// Unsigned 8 bit integer.
-typedef unsigned char uint_8;
+typedef unsigned char uint8;
 /// Unsigned 16 bit integer.
-typedef unsigned short uint_16;
+typedef unsigned short uint16;
 /// Unsigned 32 bit integer.
-typedef unsigned int uint_32;
+typedef unsigned int uint32;
 /// Signed 8 bit integer.
 typedef char int8;
 /// Signed 16 bit integer.

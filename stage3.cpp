@@ -16,7 +16,6 @@ NORETURN int main()
     screen.set_color(10);
     screen.clear();
     screen.printstr("Just testing.\n");
-    
     // Halt execution by disabling interrupts and halting forever.
     while(1)
     {

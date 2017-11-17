@@ -7,37 +7,42 @@
 
 // Constructor
 screen_device::screen_device()
-    : m_cursor_x(0), m_cursor_y(0), m_text_color(7)
+    : m_cursor_x(0), m_cursor_y(0), m_text_color(7), m_text_background(0)
 {
 
 }
 
 void screen_device::clear()
 {
-    for (uint_8 x = 0; x < screen_cols; ++x)
+    for (uint8 x = 0; x < screen_cols; ++x)
     {
-        for (uint_8 y = 0; y < screen_rows; ++y)
+        for (uint8 y = 0; y < screen_rows; ++y)
         {
-            putch(' ', x, y, m_text_color);
+            putch(' ', x, y, m_text_color, m_text_background);
         }
     }
     m_cursor_x = 0;
     m_cursor_y = 0;
 }
 
-void screen_device::set_color(uint_8 color)
+void screen_device::set_color(uint8 color)
 {
     m_text_color = color;
 }
 
 // Set cursor position.
-void screen_device::move_cursor(uint_8 x, uint_8 y)
+void screen_device::move_cursor(uint8 x, uint8 y)
 {
     // Normalize x
-    while (x > screen_cols) 
+    while (x >= screen_cols) 
     {
         x -= screen_cols;
         y++;
+    }
+    // normalize y
+    if (y >= screen_rows)
+    {
+        y=screen_rows-1;
     }
     m_cursor_x = x;
     m_cursor_y = y;
@@ -45,25 +50,25 @@ void screen_device::move_cursor(uint_8 x, uint_8 y)
 
 // Writes a character to the screen at specific location.
 void screen_device::putch(
-    const uint_8 character, uint_8 x, uint_8 y, uint_8 color)
+    const uint8 character, 
+    int16 x, 
+    int16 y, 
+    uint8 fg_color, 
+    uint8 bg_color)
 {
-    // Declare video memory start and an offset we'll use to calculate where to
-    // write data to.
-    volatile uint_8* vga = reinterpret_cast<volatile uint_8*>(0xB8000);
-    // Normalize X coordinate to maximum number of columns.
-    while (x >= screen_cols) x -= screen_cols;
-    // There are 2 memory locations for every cursor position (character and color).
-    vga += x * 2;
-    vga += y * (screen_cols * 2);
-    // Write into video memory.
-    *vga++ = character;
-    *vga = color;
-    move_cursor(x,y);
+    // Normalize x,y to prevent writing outside of video RAM.
+    if ( x > screen_cols) x = screen_cols;
+    if ( y > screen_rows) y = screen_rows;
+    // Compute attributes and write to memory.
+    uint16 attrib = (bg_color << 4) | (fg_color & 0x0F);
+    volatile uint16* video_memory;
+    video_memory = (volatile uint16*)0xB8000 + (y * screen_cols + x);
+    *video_memory = character | (attrib << 8);
 }
 
 
 void screen_device::printstr(
-        const char* str, uint_8 x, uint_8 y, uint_8 color)
+        const char* str, uint8 x, uint8 y, uint8 color, uint8 bgcolor)
 {
     // Print string by iterating characters until null-terminator.
     char c = 1;
@@ -77,7 +82,7 @@ void screen_device::printstr(
         }
         else
         {
-            putch(c, x++, y, color);
+            putch(c, x++, y, color, bgcolor);
         }
         str++;
     }
@@ -85,6 +90,6 @@ void screen_device::printstr(
 
 void screen_device::printstr(const char* str)
 {
-    printstr(str, m_cursor_x, m_cursor_y, m_text_color);
+    printstr(str, m_cursor_x, m_cursor_y, m_text_color, m_text_background);
 }
 

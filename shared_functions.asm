@@ -85,12 +85,6 @@ setmode:
 print_hex_number:
     ; save clobbered registers.
     pusha
-    push ax
-    mov al, '0'
-    call putch
-    mov al, 'x'
-    call putch
-    pop ax
     ; Count digits in CX.
     xor cx, cx
     ; otherwise keep dividing digit by 10 

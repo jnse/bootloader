@@ -43,32 +43,31 @@ main:
     call info
 	; Enable A20 memory lane if needed.
     call enable_a20
-    ; Load stage3 from disk.
-    mov si, info_str
-    call print
-    mov si, load_str
-    call print
-    xor ax, ax
-    mov al, [boot_drive]
-    call print_hex_number
-    mov si, into_str
-    call print
-
-
     ; Convert physical stage3 code address
     ; to real-mode segment and offset.
     mov eax, stage3_code
-    call phys_to_seg_offs 
-    ; output: BX=segment, DX=offset
+    call phys_to_seg_offs ; output: BX=segment, DX=offset
     ; Print the parsed address to screen:
-    mov eax, ebx
+    ; Print message to show where where we're loading code from/to.
+    mov si, info_str          ; [INFO]
+    call print
+    mov si, load_str          ; loading stage 3 from disk
+    call print
+    xor ax, ax
+    mov al, [boot_drive]      ; <disk number>
     call print_hex_number
-    mov ax, ':'
+    mov si, into_str          ; into
+    call print                
+    mov eax, ebx              ; <segment>
+    call print_hex_number
+    mov ax, ':'               ; :
     call putch
-    mov eax, edx
+    mov eax, edx              ; <offset>
     call println_hex_number
     ; Load code from disk.
-    mov es, bx
+    push edx
+    push ebx
+    mov es, bx ; ES:BX = memory location where code is loaded.
     mov bx, dx
     mov dl, [boot_drive]
     mov al, 0x03 ; # sectors to load
@@ -76,6 +75,8 @@ main:
     mov ch, 0x00 ; cylinder 0
     mov dh, 0x00 ; head 0
     call load_code
+    pop ebx
+    pop edx
     cmp ax, 0
     je .success
     call halt_and_catch_fire
@@ -84,23 +85,27 @@ main:
     mov si, info_str
     call print
     mov si, stage3_hexdump_str
-    call print
+    call println
+    mov ds, bx
+    mov si, dx
+    push dx
+    push bx
     ; DS:SI = memory to dump
     ; BX = number of bytes
-    mov ax, stage3_code
-    mov si, ax
     mov bx, 9
     call memdump
     mov si, info_str
     call print
     mov si, stage3_jmp_str
     call print
-    mov ax, stage3_code
-    call println_hex_number
+
     ; Enter protected mode.
     mov eax, cr0
     or eax, 1
     mov cr0, eax
+
+    pop bx
+    pop dx
     jmp (CODE_DESC - NULL_DESC) : protected_mode_longjump
 
 ; Calculate 16 bit segment address from 32 bit physical address.
@@ -132,19 +137,25 @@ phys_to_seg_offs:
 ; DS:SI = memory to dump
 ; BX = number of bytes
 memdump:
+    ; Print newline.
     pusha
     mov al, 10
     call putch
     mov al, 13
     call putch
+    ; Print 7 spaces.
     push si
     mov si, seven_spaces_str
     call print
+    ; Print segment:offset
     pop si
-    mov ax, si
+    mov ax, ds
     call print_hex_number
     mov al, ':'
     call putch
+    mov ax, si
+    call print_hex_number
+
     mov al, ' '
     call putch
 .loop:
@@ -235,6 +246,6 @@ protected_mode_longjump:
     mov gs, ax
     sti
     ; Enter stage3
-    call stage3_code
-    jmp $
+    jmp stage3_code
+    jmp halt_and_catch_fire
 
