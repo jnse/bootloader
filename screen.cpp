@@ -34,6 +34,7 @@ void screen_device::set_color(uint8 color)
 void screen_device::move_cursor(uint8 x, uint8 y)
 {
     // Normalize x
+/*
     while (x >= screen_cols) 
     {
         x -= screen_cols;
@@ -44,6 +45,7 @@ void screen_device::move_cursor(uint8 x, uint8 y)
     {
         y=screen_rows-1;
     }
+*/
     m_cursor_x = x;
     m_cursor_y = y;
 }

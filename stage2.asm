@@ -107,18 +107,17 @@ main:
 	call error
 	call halt_and_catch_fire
 .get_mmap_success:
-
     mov si, get_mem_map_success_str
 	call info
-
+.get_cursor_position:
+	mov ah,0x03
+	xor bh, bh
+	int 0x10 ; output: DH=row DL=column
 .enter_protected:
     ; Enter protected mode.
     mov eax, cr0
     or eax, 1
     mov cr0, eax
-
-    pop bx
-    pop dx
     jmp (CODE_DESC - NULL_DESC) : protected_mode_longjump
 
 ; Calculate 16 bit segment address from 32 bit physical address.
@@ -259,8 +258,11 @@ protected_mode_longjump:
     mov fs, ax
     mov es, ax
     mov gs, ax
-    sti
+    ;sti
+	cli
     ; Enter stage3
-    jmp stage3_code
+	mov eax, stage3_code
+    call phys_to_seg_offs
+	jmp bx:dx  ;; \TODO fix this
     jmp halt_and_catch_fire
 

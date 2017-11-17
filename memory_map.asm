@@ -72,8 +72,8 @@ get_memory_map_e820:
     stc                       ; CS=1 failure.
     ret
 
-; number of entries in memory map.
-memmap_e_num: resb 1
 loading_mem_map_str: db 'Loading memory map into: ', 0
 unsupported_err_str: db 'BIOS AX=E820h, INT 10h returned "unsupported function"', 0
+
+memmap_e_num: resb 1
 
