@@ -85,20 +85,33 @@ main:
     mov si, info_str
     call print
     mov si, stage3_hexdump_str
-    call println
+    call print
     mov ds, bx
     mov si, dx
-    push dx
-    push bx
     ; DS:SI = memory to dump
     ; BX = number of bytes
     mov bx, 9
     call memdump
-    mov si, info_str
-    call print
-    mov si, stage3_jmp_str
-    call print
+	; Get a memory map.
+	xor eax, eax
+	mov ds, eax
+	mov si, get_mem_map_str
+	call info
+	mov eax, memory_map
+	call get_memory_map_e820
+	jnc .get_mmap_success
+.get_mmap_failed:
+	xor ax, ax
+    mov ds, ax
+	mov si, get_mem_map_err_str
+	call error
+	call halt_and_catch_fire
+.get_mmap_success:
 
+    mov si, get_mem_map_success_str
+	call info
+
+.enter_protected:
     ; Enter protected mode.
     mov eax, cr0
     or eax, 1
@@ -182,6 +195,7 @@ memdump:
 
 %include "a20.asm"
 %include "shared_functions.asm"
+%include "low_memory_map.asm"
 %include "memory_map.asm"
 
 ; -----------------------------------------------------------------------------
@@ -228,8 +242,9 @@ a20_error_str: db 'Failed to enable A20.', 0
 gdt_installed_str: db 'GDT installed.', 0
 load_str: db 'Loading stage3 from disk ', 0
 enter_protected_str: db 'Enter PM.', 0
-get_mem_map_str: db 'Get memmap.', 0
-get_mem_map_err_str: db 'memmap failed.', 0
+get_mem_map_str: db 'Getting memory map from BIOS.', 0
+get_mem_map_err_str: db 'Could not get a memory map from BIOS.', 0
+get_mem_map_success_str: db 'Got memory map friom BIOS.', 0
 stage3_hexdump_str: db 'Hexdump of first few loaded stage3 bytes: ', 0
 seven_spaces_str: db '        ',0
 stage3_jmp_str: db 'Entering protected mode and jumping into stage3 at ', 0

@@ -86,7 +86,7 @@ welcome_str: db 'Start stage1.', 0
 load_str: db 'Load stage2 @disk ', 0
 success_str: db 'JMP stage2 @', 0
 
-%include "memory_map.asm"
+%include "low_memory_map.asm"
 %include "shared_constants.asm"
 
 ; -----------------------------------------------------------------------------
