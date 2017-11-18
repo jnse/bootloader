@@ -49,7 +49,7 @@ class screen_device
          * @param x : New cursor column.
          * @param y : New cursor row.
          */
-        void move_cursor(uint8 x, uint8 y);
+        void move_cursor(uint16 x, uint16 y);
 
         /**
          * Writes a character to the screen at a specific location.
@@ -60,7 +60,7 @@ class screen_device
          * @param color : Color of character to print.
          */
         void putch(
-            const uint8 character, 
+            uint8 character, 
             int16 x, 
             int16 y, 
             uint8 bg_color, 
@@ -75,7 +75,7 @@ class screen_device
          * @param color : Color of character to print.
          * @param bgcolor : Background color of character to print.
          */ 
-        void printstr(const char* str, uint8 x, uint8 y, uint8 color, uint8 bgcolor);
+        void printstr(const char* str, uint16 x, uint16 y, uint8 color, uint8 bgcolor);
 
         /**
          * Writes a series of characters to the screen.
@@ -85,6 +85,15 @@ class screen_device
          * @param character : Character to print to screen.
          */
         void printstr(const char* str);
+
+        /**
+         * Writes an integer number to the screen.
+         *
+         * @param number : Number to be printed
+         * @param base : (optional) Number base 
+         *               eg: 2 for bin, 8 for oct, 10 for dec, 16 for hex
+         */
+        void print_number(int number, int base=10);
 
 };
 

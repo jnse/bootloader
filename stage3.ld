@@ -1,10 +1,9 @@
-
 ENTRY(main);
 
 SECTIONS
 {
-    . = 0x1BFFF;
-    .text : AT(0x1BFFF)
+    . = 0x00014FFF;
+    .text : AT(0x00014FFF)
     {
         _text = .;
         *(.text);
@@ -13,12 +12,16 @@ SECTIONS
     .data :
     {
         _data = .;
-        *(.bss);
-        *(.bss*);
         *(.data);
         *(.rodata*);
         *(COMMON)
         _data_end = .;
+    }
+    .bss :
+    {
+        _bss = .;
+        *(.bss);
+        _bss_end = .;
     }
     /DISCARD/ :
     {

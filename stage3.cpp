@@ -9,25 +9,16 @@
 #include "screen.h"
 
 /// Stage 3 entry point.
-NORETURN THISCALL int main(uint16 cursor_data)
+NORETURN int main(uint16 cursor_data)
 {
 
     screen_device screen;
-
-    screen.set_color(7);
-    screen.clear();
-
-    uint8 cursor_start_x = 0;
-    uint8 cursor_start_y = 11;
-    //screen.move_cursor(cursor_start_x, cursor_start_y);
-    if (cursor_data==0) 
-    {
-        screen.printstr("cursor data is zero");
-    }
-    else
-    {
-        screen.printstr("got cursor data");
-    }
+    screen.set_color(10);
+    //screen.clear();
+    uint16 cursor_start_y = cursor_data >> 8;
+    uint16 cursor_start_x = cursor_data & 0xff;
+    screen.move_cursor(cursor_start_x, cursor_start_y);
+    screen.printstr("Start stage3.");
     // Halt execution by disabling interrupts and halting forever.
     while(1)
     {

@@ -70,8 +70,8 @@ main:
     mov es, bx ; ES:BX = memory location where code is loaded.
     mov bx, dx
     mov dl, [boot_drive]
-    mov al, 0x03 ; # sectors to load
-    mov cl, 0x05 ; starting sector
+    mov al, 0x05 ; # sectors to load
+    mov cl, 0x06 ; starting sector
     mov ch, 0x00 ; cylinder 0
     mov dh, 0x00 ; head 0
     call load_code
@@ -81,7 +81,7 @@ main:
     je .success
     call halt_and_catch_fire
 .success:
-    ; Dump first 10 loaded bytes to screen.
+    ; Dump first loaded bytes to screen.
     mov si, info_str
     call print
     mov si, stage3_hexdump_str
@@ -90,7 +90,7 @@ main:
     mov si, dx
     ; DS:SI = memory to dump
     ; BX = number of bytes
-    mov bx, 9
+    mov bx, 4
     call memdump
 	; Get a memory map.
 	xor eax, eax
@@ -110,11 +110,12 @@ main:
     mov si, get_mem_map_success_str
 	call info
 .get_cursor_position:
-	mov ah,0x03
+	mov ah, 0x03
 	xor bh, bh
 	int 0x10 ; output: DH=row DL=column
 .enter_protected:
     ; Enter protected mode.
+    mov ss, ax
     mov eax, cr0
     or eax, 1
     mov cr0, eax
@@ -149,16 +150,8 @@ phys_to_seg_offs:
 ; DS:SI = memory to dump
 ; BX = number of bytes
 memdump:
-    ; Print newline.
     pusha
-    mov al, 10
-    call putch
-    mov al, 13
-    call putch
-    ; Print 7 spaces.
     push si
-    mov si, seven_spaces_str
-    call print
     ; Print segment:offset
     pop si
     mov ax, ds
@@ -178,6 +171,15 @@ memdump:
     pop si
     lodsb      ; loads DS:SI into AL
     push si
+    cmp ax, 0x0F
+    jle .pad
+    jmp .donepad
+.pad:
+    push ax
+    mov ax, '0'
+    call putch
+    pop ax
+.donepad:
     call print_hex_number
     mov al, ' '
     call putch
@@ -202,6 +204,24 @@ memdump:
 ; -----------------------------------------------------------------------------
 
 section .data
+
+%include "shared_constants.asm"
+
+stage2_welcome_str: db 'Start stage2.', 0
+do_a20_str: db 'Enabling A20.', 0
+a20_enabled_str: db 'A20 enabled.', 0
+a20_error_str: db 'Failed to enable A20.', 0
+gdt_installed_str: db 'GDT installed.', 0
+load_str: db 'Loading stage3 from disk ', 0
+enter_protected_str: db 'Enter PM.', 0
+get_mem_map_str: db 'Getting memory map from BIOS.', 0
+get_mem_map_err_str: db 'Could not get a memory map from BIOS.', 0
+get_mem_map_success_str: db 'Got memory map from BIOS.', 0
+stage3_hexdump_str: db 'Hexdump of first few loaded stage3 bytes: ', 0
+seven_spaces_str: db '        ',0
+stage3_jmp_str: db 'Entering protected mode and jumping into stage3 at ', 0
+
+section .text
 
 ; GDT table
 gdt:
@@ -231,38 +251,25 @@ gdtr:
     Limit dw gdtr - NULL_DESC - 1 ; length of GDT
     Base dd NULL_DESC             ; base of GDT
 
-
-%include "shared_constants.asm"
-
-stage2_welcome_str: db 'Start stage2.', 0
-do_a20_str: db 'Enabling A20.', 0
-a20_enabled_str: db 'A20 enabled.', 0
-a20_error_str: db 'Failed to enable A20.', 0
-gdt_installed_str: db 'GDT installed.', 0
-load_str: db 'Loading stage3 from disk ', 0
-enter_protected_str: db 'Enter PM.', 0
-get_mem_map_str: db 'Getting memory map from BIOS.', 0
-get_mem_map_err_str: db 'Could not get a memory map from BIOS.', 0
-get_mem_map_success_str: db 'Got memory map friom BIOS.', 0
-stage3_hexdump_str: db 'Hexdump of first few loaded stage3 bytes: ', 0
-seven_spaces_str: db '        ',0
-stage3_jmp_str: db 'Entering protected mode and jumping into stage3 at ', 0
-
-section .text
-
 [bits 32]
 protected_mode_longjump:
+    ; Set up segment for stage3 code.
+    sti
     mov ax, 0x10
     mov ds, ax
     mov ss, ax
     mov fs, ax
     mov es, ax
     mov gs, ax
-    ;sti
-	cli
-    ; Enter stage3
-	mov eax, stage3_code
-    call phys_to_seg_offs
-	jmp bx:dx  ;; \TODO fix this
-    jmp halt_and_catch_fire
+    ; Set up stack for stage3 code (0000:FFFF)
+    mov esp, 0x00007E00
+    mov ebp, esp
+    cli
+    push word dx
+    push $
+    jmp stage3_code
+.halt:
+    cli
+    hlt
+    jmp .halt
 
