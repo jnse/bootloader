@@ -70,7 +70,7 @@ main:
     mov es, bx ; ES:BX = memory location where code is loaded.
     mov bx, dx
     mov dl, [boot_drive]
-    mov al, 0x05 ; # sectors to load
+    mov al, 0x07 ; # sectors to load
     mov cl, 0x06 ; starting sector
     mov ch, 0x00 ; cylinder 0
     mov dh, 0x00 ; head 0
@@ -160,7 +160,6 @@ memdump:
     call putch
     mov ax, si
     call print_hex_number
-
     mov al, ' '
     call putch
 .loop:
@@ -264,9 +263,11 @@ protected_mode_longjump:
     ; Set up stack for stage3 code (0000:FFFF)
     mov esp, 0x00007E00
     mov ebp, esp
-    cli
-    push word dx
-    push $
+    push dword [memmap_e_num] ; pass number of memory map entries to stage3 main()
+    push dword memory_map     ; pass memory map location to stage3 main()
+    push word 0x0000          ; put in a blank since cursor data is a single byte.
+    push word dx              ; pass cursor data to stage3 main()
+    push $+2                  ; pass return address 
     jmp stage3_code
 .halt:
     cli

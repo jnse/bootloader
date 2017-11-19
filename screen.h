@@ -3,7 +3,7 @@
  */
 
 #ifndef SCREEN_H_INCLUDE
-#define SCREEN_H
+#define SCREEN_H_INCLUDE
 
 #include "types.h"
 
@@ -60,7 +60,7 @@ class screen_device
          * @param color : Color of character to print.
          */
         void putch(
-            uint8 character, 
+            const uint8 character, 
             int16 x, 
             int16 y, 
             uint8 bg_color, 
@@ -92,8 +92,9 @@ class screen_device
          * @param number : Number to be printed
          * @param base : (optional) Number base 
          *               eg: 2 for bin, 8 for oct, 10 for dec, 16 for hex
+         * @param pad : Pad zero's to left of number (overrides base16 auto-pad).
          */
-        void print_number(int number, int base=10);
+        void print_number(uint32 number, int base=10, int16 pad=-1);
 
 };
 

@@ -2,8 +2,8 @@
  * Screen device and related handlers.
  */
 
-#include "port.h"
 #include "screen.h"
+#include "string.h"
 
 // Constructor
 screen_device::screen_device()
@@ -47,7 +47,7 @@ void screen_device::move_cursor(uint16 x, uint16 y)
 
 // Writes a character to the screen at specific location.
 void screen_device::putch(
-    uint8 character, 
+    const uint8 character, 
     int16 x, 
     int16 y, 
     uint8 fg_color, 
@@ -91,63 +91,55 @@ void screen_device::printstr(const char* str)
     printstr(str, m_cursor_x, m_cursor_y, m_text_color, m_text_background);
 }
 
-void screen_device::print_number(int number, int base)
+void screen_device::print_number(uint32 number, int base, int16 pad)
 {
-    char buffer[32] = {};
+    int buffer_max = 32;
+    char buffer[buffer_max] = {};
     char* pbuffer = buffer;
-    char digit_count=0;
-    int original_number = number;
-    // Extract digits and convert to ascii in given base.
-    while (number > 0)
+    uint8 digit_count = 0;
+    if (number == 0)
     {
-        char output=0;
-        int digit = number % base;
-        number = number / base;
-        output='0'+digit;
-        if ((base == 16) and (digit >= 10)) output='A'+(digit-10);
-        *pbuffer = output;
-        pbuffer++;
-        digit_count++;
+        buffer[0] = '0';
     }
-    // If we're printing hex digits, pad the output to 8, 16, or 32 bits.
-    if (base == 16)
+    else
     {
-        char pad=0;
-        // Handle padding for 8 and 16 bit hex numbers.
-        // 0xF becomes 0x0F and 0xFFF becomes 0x0FFF
-        if (
-            (original_number < 0x10) 
-            or ((original_number > 0xFF) and (original_number < 0x1000)))
+        // Extract digits and convert to ascii in given base.
+        while (number > 0)
         {
-            pad = 1;
+            char output=0;
+            uint32 digit = number % base;
+            number = number / base;
+            output='0'+digit;
+            if ((base == 16) and (digit >= 10)) output='A'+(digit-10);
+            *pbuffer = output;
+            pbuffer++;
+            digit_count++;
         }
-        else if (original_number > 0xFFFF) // Pad to 32bit if >16bit number.
-        {
-            pad = 8 - digit_count;
-        }
+    }
+    // Do number padding.
+    if (pad > 0)
+    {
+        pad -= digit_count;
         // Do padding into buffer.
-        for (int digit = 0 ; digit < pad ; ++digit)
+        for (uint32 digit = 0 ; digit < static_cast<uint16>(pad) ; ++digit)
         {
             *pbuffer = '0';
             pbuffer++;
             digit_count++;
         }
     }
-    // Traverse buffer in reverse and print to screen.
-    for (int digit = digit_count; digit >= 0; --digit)
+    for (pbuffer = buffer+strlen(buffer)+1 ;  pbuffer != buffer-1; pbuffer--)
     {
-        if (buffer[digit] != 0)
-        {
-            move_cursor(m_cursor_x, m_cursor_y);
-            putch(
-                buffer[digit], 
-                m_cursor_x,
-                m_cursor_y,
-                m_text_color,
-                m_text_background
-            );
-            m_cursor_x++;
-        }
+        if (*pbuffer == 0) continue;
+        move_cursor(m_cursor_x, m_cursor_y);
+        putch(
+            *pbuffer, 
+            m_cursor_x,
+            m_cursor_y,
+            m_text_color,
+            m_text_background
+        );
+        m_cursor_x++;
     }
 }
 

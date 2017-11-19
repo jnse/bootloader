@@ -6,14 +6,24 @@ global memmap_e_num
 ; Ask BIOS for a memory map using ax=e820, int15
 ; and store it in memory.
 ;
+; This function is way longer than it 'could' have been...
+; We're storing everyting in a buffer the size of a single entry, and
+; then copying that buffer to the memory map, rather than saving directly
+; in the appropriate location in the memory map. This is because some 
+; BIOSes expect es:di to always be the same address after the first 
+; continuation.
+;
 ; input: EAX = physical memory address to load map into.
 ;
 get_memory_map_e820:
     pusha
-	call phys_to_seg_offs
+    ; save memory location, and get it's segment/offset.
+    push eax
+    call phys_to_seg_offs
 	mov es, bx
 	mov di, dx
-	mov si, info_str
+    ; print message to screen with memory location. 
+    mov si, info_str
 	call print
 	mov si, loading_mem_map_str
 	call print
@@ -22,58 +32,88 @@ get_memory_map_e820:
 	mov ax, ':'
 	call putch
 	mov ax, di
-	call println_hex_number    
-	xor ebx, ebx              ; ebx must be 0 to start
+	call println_hex_number
+    ; set es:di to the buffer location.
+    mov ax, cs
+    mov es, ax
+    mov di, e820_entry_buffer
+    ; init entry loop
+    xor ebx, ebx              ; Continuation, start from entry 0.
     xor bp, bp                ; entry counter
-    mov edx, 0x0534D4150      ; yes, we want a memory map.
-    mov [es:di + 20], dword 1 ; force a valid ACPI3 entry
+.fetch_entry:
+    mov edx, SMAP             ; yes, we want a memory map (SMAP magic string).
     mov ecx, 24               ; ask for 24 bytes
-    mov eax, 0xe820           
+    mov eax, 0xe820           ; EAX=E820 INT 15h : Query System Address Map
     int 0x15
     jc .unsupported           ; CS = "unsupported function"
-    mov edx, 0x0534D4150      ; check if BIOS trashed edx (some do)
-    cmp eax, edx
+    mov edx, SMAP             ; Some BIOSes trash edx.
+    cmp eax, edx              ; eax=="SMAP" on success.
     jne .failed
-    test ebx, ebx             ; ebx=0 means list is only 1 entry long (useless)
-    je .failed
-    jmp .jump_in
-.fetch_entry:
-    mov [es:di + 20], dword 1 ; force a valid ACPI3 entry
-    mov ecx, 24               ; ask for 24 bytes
-    mov eax, 0xe820           ; eax and ecx get trashed on every int15h call
-    int 0x15
-    jc .success               ; CS = end of list.
-    mov edx, 0x0534D4150      ; fix potentially trashed edx.
-.jump_in:
-    jcxz .skipent             ; skip 0-length entries.
-    cmp cl, 20                ; got a 24 byte ACPI3 response?
-    jbe .notext
-    test byte [es:di+20], 1   ; is 'ignore this data' bit clear?
-    je short .skipent
-.notext:
-    mov ecx, [es:di + 8]      ; get lower 32b of memory region length
-    or ecx, [es:di + 12]      ; OR it with upper 32b to test for zero.
-    jz .skipent               ; if length of the 64b entry is 0, skip it.
-    inc bp                    ; inc count, move to next spot.
-    add di, 24
-.skipent:
-    test ebx, ebx             ; ebx=0 when we're done.
-    jne short .fetch_entry    ; if we're not done, grab next entry.
+.verify_entry:
+    ; Skip zero-length entries.
+    mov ecx, dword [es:di + 8]
+    or ecx, dword [es:di + 12]
+    jz .fetch_entry
+.save_entry:
+    ; set up DS:SI to point to entry buffer.
+    mov ax, cs
+    mov ds, ax
+    mov si, e820_entry_buffer
+    ; EAX = current entry * size of entry
+    push ebx             ; save ebx before clobbering
+    mov eax, ebp         ; ax = current entry
+    mov bx, 0x24         ; bx = size of entry
+    mul bx               ; DX:AX = AX * BX
+    ; Add this to the entry table memory offset.
+    mov edx, eax
+    pop ebx  ; restore clobbered ebx
+    pop eax  ; pop previously saved entry table memory location in eax
+    push eax ; and save it right back to the stack.
+    add eax, edx
+    ; Now convert the physical memory location to an offset 
+    ; and segment in es:di
+    push ebx ; can't clobber ebx, we're using it as entry continuation counter.
+    call phys_to_seg_offs
+    mov es, bx
+	mov di, dx
+    pop ebx
+    ; Now copy ECX bytes from [DS:SI] (buffer) --> ES:DI (memory)
+    mov ecx, 24
+    rep movsb
+    ; set es:di back to the e820 entry buffer.
+    mov ax, cs       
+    mov es, ax
+    mov di, e820_entry_buffer
+    inc bp      ; increment entry count.
+    cmp ebx, 0  ; check if there's more.
+    je .success ; exit if not
+    jmp .fetch_entry
 .success:
+    pop eax
+    mov [memmap_e_num], bp ; store number of entries.
     popa
-    mov [memmap_e_num], bp    ; store number of entries.
-    clc                       ; CS=0 success.
+    clc ; CS=0 success.
     ret
 .unsupported:
 	mov si, unsupported_err_str
 	call error
 .failed:
+    pop eax
     popa
-    stc                       ; CS=1 failure.
+    stc ; CS=1 failure.
     ret
 
+; Buffer for a single E820 entry.
+e820_entry_buffer: resd 6
+
+; Number of entries in the table.
+memmap_e_num: resd 1
+
+; "SMAP" magic string.
+SMAP: equ 0x0534D4150
+
+; User messages.
 loading_mem_map_str: db 'Loading memory map into: ', 0
 unsupported_err_str: db 'BIOS AX=E820h, INT 10h returned "unsupported function"', 0
 
-memmap_e_num: resb 1
 

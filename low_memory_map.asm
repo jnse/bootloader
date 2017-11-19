@@ -29,7 +29,7 @@ global memory_map
 ; | ...        |                    |                  | stage2 code      |
 ; | 20 KiB     |                    | Code (20 KiB)    | preserved for    |
 ; | ...        |                    |                  | GDT (20 KiB)     |
-; | 0x0000FFFF |                    +------------------+------------------|
+; | 0x00010000 |                    +------------------+------------------|
 ; | ...        |                    |                                     |
 ; | 20 KiB     |                    | Memory map (20 KiB)                 |
 ; | ...        |                    |                                     |
@@ -51,6 +51,6 @@ stage1_code:  equ 0x7C00
 stage2_stack: equ 0x7DFF
 stage2_code:  equ 0x7E00
 stage3_stack: equ 0x7E00
-memory_map:   equ 0x0000FFFF
+memory_map:   equ 0x00010000
 stage3_code:  equ 0x00014FFF
 

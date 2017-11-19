@@ -17,6 +17,8 @@ typedef char int8;
 typedef short int16;
 /// Signed 32 bit integer.
 typedef int int32;
+/// Size of any object.
+typedef decltype(sizeof(0)) size_t;
 
 #endif
 
