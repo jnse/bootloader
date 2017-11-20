@@ -13,8 +13,12 @@ echo -e "[COMPILING STAGE 2]"
 nasm stage2.asm -f bin -o stage2.img
 
 echo -e "[COMPILING STAGE 3]"
-CPPFLAGS="--std=c++11 -m32 -c -Wall -Werror -I . -ffreestanding -nostdinc -nostdlib -mno-red-zone -mno-mmx -mno-sse -mno-sse2"
-LDFLAGS="-melf_i386 -Tstage3.ld -nostdlib -nostdc --nmagic"
+
+WARN_FLAGS="-Wall -Werror -Werror-implicit-function-declaration"
+ARCH_FLAGS="-m32 -mno-red-zone -mno-mmx -mno-sse -mno-sse2"
+LIB_FLAGS="-ffreestanding -nostdinc -nostdlib"
+CPPFLAGS="--std=c++11 -c $WARN_FLAGS -I . $LIB_FLAGS $ARCH_FLAGS -fno-tree-scev-cprop"
+LDFLAGS="-melf_i386 -Tstage3.ld -nostdlib -nostdc --nmagic -L/usr/lib64/gcc/x86_64-pc-linux-gnu/5.4.0/32 -static"
 g++ $CPPFLAGS -o string.o string.cpp
 g++ $CPPFLAGS -o screen.o screen.cpp
 g++ $CPPFLAGS -o port.o port.cpp

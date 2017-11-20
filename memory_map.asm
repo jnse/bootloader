@@ -53,7 +53,11 @@ get_memory_map_e820:
     ; Skip zero-length entries.
     mov ecx, dword [es:di + 8]
     or ecx, dword [es:di + 12]
-    jz .fetch_entry
+    jz .done_processing_entry
+    ; Skip reserved blocks.
+    mov ecx, dword [es:di + 16]
+    cmp ecx, 2
+    je .done_processing_entry
 .save_entry:
     ; set up DS:SI to point to entry buffer.
     mov ax, cs
@@ -62,7 +66,7 @@ get_memory_map_e820:
     ; EAX = current entry * size of entry
     push ebx             ; save ebx before clobbering
     mov eax, ebp         ; ax = current entry
-    mov bx, 0x24         ; bx = size of entry
+    mov bx, 24           ; bx = size of entry
     mul bx               ; DX:AX = AX * BX
     ; Add this to the entry table memory offset.
     mov edx, eax
@@ -85,6 +89,7 @@ get_memory_map_e820:
     mov es, ax
     mov di, e820_entry_buffer
     inc bp      ; increment entry count.
+.done_processing_entry:
     cmp ebx, 0  ; check if there's more.
     je .success ; exit if not
     jmp .fetch_entry

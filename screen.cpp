@@ -93,7 +93,7 @@ void screen_device::printstr(const char* str)
 
 void screen_device::print_number(uint32 number, int base, int16 pad)
 {
-    int buffer_max = 32;
+    int buffer_max = 65;
     char buffer[buffer_max] = {};
     char* pbuffer = buffer;
     uint8 digit_count = 0;
@@ -142,4 +142,28 @@ void screen_device::print_number(uint32 number, int base, int16 pad)
         m_cursor_x++;
     }
 }
+
+void screen_device::dump_memory(volatile uint8* ptr, uint32 bytes, uint8 bytes_per_line)
+{
+    volatile uint8* start = ptr;
+    volatile uint8* end = start+bytes;
+    volatile uint8* current = start;
+    uint8 counter = 0;
+    print_number(reinterpret_cast<uint32>(current), 16, 8);
+    printstr(" : ");
+    for (current = start; current != end; ++current)
+    {
+        print_number(*current,16,2);
+        printstr(" ");
+        counter++;
+        if (counter >= bytes_per_line) 
+        {
+            counter = 0;
+            printstr("\n");
+            print_number(reinterpret_cast<uint32>(current), 16, 8);
+            printstr(" : ");
+        }
+    }
+}
+
 

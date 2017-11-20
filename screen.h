@@ -87,6 +87,15 @@ class screen_device
         void printstr(const char* str);
 
         /**
+         * Dumps memory at location ptr to the screen.
+         *
+         * @param ptr : Pointer to beginning of memory to be dumped.
+         * @param bytes : Number of bytes to dump.
+         * @param bytes_per_line : Number of bytes per line to show.
+         */
+        void dump_memory(volatile uint8* ptr, uint32 bytes, uint8 bytes_per_line=24);
+
+        /**
          * Writes an integer number to the screen.
          *
          * @param number : Number to be printed

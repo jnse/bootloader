@@ -39,8 +39,8 @@ NORETURN int main(uint16 cursor_data, e820_memory_map_entry* memmap_ptr, uint32 
         halt(log);
     }
     // Parse memory map entries.
+    screen.printstr("\nMemory map : \n");
     parse_memory_map(screen, memmap_ptr, memmap_entries);
-    screen.printstr("\n");
     // Halt execution by disabling interrupts and halting forever.
     while(1)
     {
