@@ -11,7 +11,7 @@
 /**
  * Memory map entry as returned by AX=E820h, INT 15h
  */
-struct e820_memory_map_entry
+struct PACKED e820_memory_map_entry
 {
     uint32 base_low;
     uint32 base_high; 

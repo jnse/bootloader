@@ -91,7 +91,7 @@ void screen_device::printstr(const char* str)
     printstr(str, m_cursor_x, m_cursor_y, m_text_color, m_text_background);
 }
 
-void screen_device::print_number(uint32 number, int base, int16 pad)
+void screen_device::print_number(uint64 number, int base, int16 pad)
 {
     int buffer_max = 65;
     char buffer[buffer_max] = {};
@@ -107,8 +107,44 @@ void screen_device::print_number(uint32 number, int base, int16 pad)
         while (number > 0)
         {
             char output=0;
-            uint32 digit = number % base;
-            number = number / base;
+            uint32 digit=0;
+            // If we're truly dealing with a 64 bit integer
+            // we won't be able to divide normally because
+            // gcc won't support it in freestanding 32bit 
+            // executables. It does support division by powers
+            // of two.
+            if (number > 0x7FFFFFFF)
+            {
+                switch(base)
+                {
+                    case 16:
+                        number = number / 16;
+                        //float temp = number / 16;
+                        //if (temp-(int)temp!=0) continue;
+                        digit = number % 16;
+                        break;
+                    case 8:
+                        number = number / 8;
+                        digit = number % 8;
+                        break;
+                    case 2:
+                        number = number / 2;
+                        digit = number % 2;
+                        break;
+                    default:
+                        printstr("\nUnsupported base.\n");
+                        return;
+                        break;
+                }
+            }
+            else
+            {
+                // Just cast to a 32 bit number otherwise.
+                uint32 temp = number;
+                digit = temp %= base;
+                temp = number;
+                number = temp /= base;
+            }
             output='0'+digit;
             if ((base == 16) and (digit >= 10)) output='A'+(digit-10);
             *pbuffer = output;

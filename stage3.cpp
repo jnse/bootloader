@@ -38,9 +38,10 @@ NORETURN int main(uint16 cursor_data, e820_memory_map_entry* memmap_ptr, uint32 
         log.error("No memory map entries returned by BIOS.");
         halt(log);
     }
+    screen.print_number(0xFABCDE0234567890,16,16);
     // Parse memory map entries.
-    screen.printstr("\nMemory map : \n");
-    parse_memory_map(screen, memmap_ptr, memmap_entries);
+    //screen.printstr("\nMemory map : \n");
+    // parse_memory_map(screen, memmap_ptr, memmap_entries);
     // Halt execution by disabling interrupts and halting forever.
     while(1)
     {
