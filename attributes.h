@@ -11,5 +11,6 @@
 #define FASTCALL __attribute__((fastcall))
 #define THISCALL __attribute__((thiscall)) 
 #define PACKED __attribute__((packed))
+#define WEAK __attribute__((weak))
 
 #endif

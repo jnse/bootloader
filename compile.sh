@@ -1,10 +1,9 @@
 set -e
 
-#nasm rmstd.asm -f elf -o rmstd.o
-#g++ -c -g -Os -m16 -ffreestanding -Wall -Werror -I. -o boot.o boot.cpp
-##ld -m elf_i386 -static -Tlinker.ld -nostdlib --nmagic -o boot.elf boot.o
-#ld -m elf_i386 -static -Tlinker.ld -nostdlib --nmagic -o boot.elf rmstd.o boot.o
-#objcopy -O binary boot.elf boot.bin
+echo "[CLEANING]"
+rm -f *.o
+rm -f *.img
+rm -f *.elf
 
 echo "[COMPILING STAGE 1]"
 nasm stage1.asm -f bin -o stage1.img
@@ -16,14 +15,15 @@ echo -e "[COMPILING STAGE 3]"
 
 WARN_FLAGS="-Wall -Werror -Werror-implicit-function-declaration"
 ARCH_FLAGS="-m32 -mno-red-zone -mno-mmx -mno-sse -mno-sse2"
-LIB_FLAGS="-ffreestanding -nostdinc -nostdlib"
+LIB_FLAGS="-ffreestanding -nostdlib"
 CPPFLAGS="--std=c++11 -c $WARN_FLAGS -I . $LIB_FLAGS $ARCH_FLAGS -fno-tree-scev-cprop"
-LDFLAGS="-melf_i386 -Tstage3.ld -nostdlib -nostdc --nmagic -L/usr/lib64/gcc/x86_64-pc-linux-gnu/5.4.0/32 -static"
+LDFLAGS="-melf_i386 -Tstage3.ld --nmagic -L/usr/lib64/gcc/x86_64-pc-linux-gnu/5.4.0/32 -static"
 g++ $CPPFLAGS -o string.o string.cpp
 g++ $CPPFLAGS -o screen.o screen.cpp
 g++ $CPPFLAGS -o port.o port.cpp
 g++ $CPPFLAGS -o log.o log.cpp
 g++ $CPPFLAGS -o stage3.o stage3.cpp
+g++ $CPPFLAGS -o abs.o abs.cpp
 g++ $CPPFLAGS -o e820_memory_map.o e820_memory_map.cpp
 ld $LDFLAGS -o stage3.elf stage3.o screen.o port.o string.o log.o e820_memory_map.o
 objcopy -R .note -R .comment -S -O binary stage3.elf stage3.img
