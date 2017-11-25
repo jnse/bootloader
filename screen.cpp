@@ -91,7 +91,7 @@ void screen_device::printstr(const char* str)
     printstr(str, m_cursor_x, m_cursor_y, m_text_color, m_text_background);
 }
 
-void screen_device::print_number(uint64 number, int base, int16 pad)
+void screen_device::print_number(uint32 number, int base, int16 pad)
 {
     int buffer_max = 65;
     char buffer[buffer_max] = {};

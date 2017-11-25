@@ -6,6 +6,7 @@
 #define SCREEN_H_INCLUDE
 
 #include "types.h"
+#include "math64.h"
 
 /// Screen height (based on video mode set in stage2).
 #define screen_rows 25
@@ -103,7 +104,7 @@ class screen_device
          *               eg: 2 for bin, 8 for oct, 10 for dec, 16 for hex
          * @param pad : Pad zero's to left of number (overrides base16 auto-pad).
          */
-        void print_number(uint64 number, int base=10, int16 pad=-1);
+        void print_number(uint32 number, int base=10, int16 pad=-1);
 
 };
 

@@ -6,6 +6,7 @@ __asm__("jmp main");
 #include "screen.h"
 #include "log.h"
 #include "e820_memory_map.h"
+#include "math64.h"
 
 /// Halts the CPU.
 NORETURN void halt(log_device& log)

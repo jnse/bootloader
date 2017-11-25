@@ -25,7 +25,8 @@ g++ $CPPFLAGS -o log.o log.cpp
 g++ $CPPFLAGS -o stage3.o stage3.cpp
 g++ $CPPFLAGS -o abs.o abs.cpp
 g++ $CPPFLAGS -o e820_memory_map.o e820_memory_map.cpp
-ld $LDFLAGS -o stage3.elf stage3.o screen.o port.o string.o log.o e820_memory_map.o
+g++ $CPPFLAGS -o math64.o math64.cpp
+ld $LDFLAGS -o stage3.elf stage3.o screen.o port.o string.o log.o e820_memory_map.o math64.o
 objcopy -R .note -R .comment -S -O binary stage3.elf stage3.img
 
 echo -e "[CREATING DISK IMAGE]"
